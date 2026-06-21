@@ -138,7 +138,7 @@ This constraint is a special case of a **linear Dirac structure** — a maximal,
 
 $$
 E\, e + F\, f = 0, \qquad
-\operatorname{rank}(\begin{pmatrix} E & F \end{pmatrix}) = m, \qquad
+\text{rank}(\begin{pmatrix} E & F \end{pmatrix}) = m, \qquad
 E F^\top + F E^\top = 0.
 $$
 
