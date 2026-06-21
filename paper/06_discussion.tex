@@ -1,0 +1,9 @@
+% !TEX root = main.tex
+\section{Discussion}
+\label{sec:discussion}
+
+This letter presented an early-terminable energy-safe iterative coupling interface for partitioned port-Hamiltonian subsystems by embedding Douglas--Rachford splitting in the wave domain. The two standing conditions, firm nonexpansiveness of the frozen port maps and discrete passivity of the subsystem integrators, yield an augmented-storage passivity guarantee for any finite inner-iteration budget, and convergence to the monolithic discretization as the inner budget increases.
+
+Several questions remain open. The present mathematical guarantees rely on the coupling being a linear orthogonal map $a=Pb$, and extending the framework to nonlinear lossless interconnections is an open direction. A quantitative state-error bound as a function of the finite inner-iteration budget $K_n$ is not yet available beyond the Fejér monotonicity guarantee. When the monolithic interface condition admits multiple solutions, the DRS limit depends on initialization; a principled solution-selection mechanism is not provided. The experiments validate the certificates on a two-oscillator benchmark but do not measure parallel speedup or scalability.
+
+Extensions of interest include adaptive selection of $\gamma$ and $K_n$ based on online FNE margin estimates, asynchronous inner iterations under communication delays, and integration of the interface layer into in-the-loop model-based control workflows.

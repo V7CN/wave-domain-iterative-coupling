@@ -1,0 +1,157 @@
+\section{Finite-Iteration Energy Safety and Convergence Guarantees}
+\label{sec:passivity_convergence}
+
+\subsection{Standing Conditions}
+\label{subsec:standing_conditions}
+
+The DRS algorithm of Section~III requires $S^n$ and $J_L$ to be firmly nonexpansive (FNE). The FNE property of $J_L$ follows automatically from the coupling structure (\S~\ref{subsec:fejer_monotonicity}). For $S^n$, we impose the following standing condition. The physical energy of the macro-step advancement is guaranteed by Condition~\ref{ass:discrete_passivity}.
+
+\begin{condition}[Firm nonexpansiveness of frozen port map]
+\label{ass:fne_portmap}
+At every macro-step $n$, the frozen port map $S_i^n$ of each subsystem is firmly nonexpansive (FNE):
+\begin{equation}
+\|S_i^n(\alpha) - S_i^n(\beta)\|^2 \leq \big\langle S_i^n(\alpha) - S_i^n(\beta),\; \alpha - \beta \big\rangle, \quad \forall \alpha, \beta \in \mathbb{R}^m.
+\label{eq:fne_inequality}
+\end{equation}
+Since $S^n = \operatorname{diag}(S_A^n, S_B^n)$, if each $S_i^n$ is FNE then the stacked map $S^n$ is also FNE.
+\end{condition}
+
+FNE is stronger than nonexpansiveness ($\|b\| \leq \|a\|$ in~\eqref{eq:wave_passivity}). For a linear scalar system $b = \rho \cdot a$, NE requires $\rho \in [-1, 1]$ (no signal amplification); FNE additionally requires $\rho \geq 0$ (no phase inversion).
+
+Treating $S_i^n$ as a static map with input $a$, output $b$ in wave-domain I/O coordinates, the FNE inequality rearranges to
+\begin{equation}
+\|b_1 - b_2\|^2 \leq \langle b_1 - b_2, a_1 - a_2\rangle,
+\label{eq:fne_rearranged}
+\end{equation}
+a static system has zero stored energy, so the inequality above states that $S_i^n$ is incrementally \textbf{output-strictly passive} (OSP). Condition~\ref{ass:fne_portmap} therefore requires $S_i^n$ to be OSP, a condition stricter than passivity.
+
+By Minty's theorem \cite{bauschke2017convex}, a map is FNE if and only if it is the resolvent $S = (I + A)^{-1}$ of a maximal monotone operator $A$. Resolvents include the proximal operator and implicit Euler steps. The following remark translates this abstract condition into a concrete impedance criterion that makes Condition~\ref{ass:fne_portmap} verifiable in practice.
+
+\begin{remark}[$\gamma$-tuning for Condition~\ref{ass:fne_portmap}]
+\label{rem:gamma_rule}
+Condition~\ref{ass:fne_portmap} admits a direct engineering interpretation in terms of the scattering impedance $\gamma$. Consider the local linearization $\delta b = J_S \delta a$ of the frozen port map at an operating point. If the port incremental response is reciprocal, $\delta e = Z_d \delta f$ with $Z_d = Z_d^\top \succ 0$, substituting the inverse scattering transform~\eqref{eq:inverse_scattering} yields
+\begin{equation}
+J_S = (Z_d - \gamma I)(Z_d + \gamma I)^{-1}.
+\label{eq:js_expression}
+\end{equation}
+Since $Z_d \succ 0$ is orthogonally diagonalizable with eigenvalues $\lambda_j > 0$, the eigenvalues of $J_S$ are $(\lambda_j - \gamma)/(\lambda_j + \gamma)$. The FNE condition $0 \preceq J_S \preceq I$ is then equivalent to $\lambda_j \geq \gamma$ for all $j$, which is
+\begin{equation}
+Z_d \succeq \gamma I.
+\label{eq:impedance_condition}
+\end{equation}
+$\gamma \leq \lambda_{\min}(Z_d)$ ensures FNE by preventing sign reversal. The FNE margin vanishes at both endpoints ($\gamma \to 0$ and $\gamma \to \lambda_{\min}$) and peaks at intermediate values. In practice $\gamma$ balances transform conditioning against DRS convergence rate.
+
+This criterion applies to collocated power ports (force--velocity, torque--angular velocity, pressure--flow, voltage--current) where the incremental impedance is typically a self-adjoint Schur complement. For non-collocated or gyroscopic systems the general matrix condition $J_S^\top J_S \preceq (J_S + J_S^\top)/2$ should be checked directly.
+\end{remark}
+
+\begin{condition}[Discrete passivity of subsystem integrator]
+\label{ass:discrete_passivity}
+For each subsystem $i \in \{A, B\}$, its discrete-time advancement map $\Phi_i^{\Delta t}$ satisfies, for all macro-steps $n$:
+\begin{equation}
+H_i(x_i^{n+1}) - H_i(x_i^n) \leq \frac{1}{2}\big(\|a_i^n\|^2 - \|b_i^{n+1}\|^2\big),
+\label{eq:discrete_passivity_scattering}
+\end{equation}
+where $a_i^n$ is the incident wave used to advance subsystem $i$, and $b_i^{n+1}$ is the outgoing wave produced after the advancement.
+\end{condition}
+
+This is the discrete-time counterpart of the continuous passivity $\dot{H}_i \leq e_i^\top f_i$ (Eq.~\eqref{eq:continuous_passivity}). The change in stored physical energy is bounded above by the net wave energy supplied through the port.
+
+\textbf{Integrator selection.}
+Condition~\ref{ass:discrete_passivity} is satisfied by discrete-gradient methods~\cite{robert2014Discrete,celledoni2012preserving} and by algebraically stable implicit Runge--Kutta methods (Gauss, Radau~IIA, Lobatto~IIIC)~\cite{wanner1996solving}. For quadratic Hamiltonians these reduce to the implicit midpoint rule.
+
+\subsection{Fejér Monotonicity of DRS}
+\label{subsec:fejer_monotonicity}
+
+Condition~\ref{ass:fne_portmap} ensures $S^n$ is FNE. We now show that $J_L$ inherits the same property from the coupling structure. Since $P^\top P = I$, $L := I-P$ satisfies $x^\top L x = \|x\|^2 - x^\top P x \ge 0$, hence $L$ is linear maximal monotone. By Minty's theorem, $J_L = (I+L)^{-1}$ is FNE. For $P=\begin{bmatrix}0&I\\I&0\end{bmatrix}$ the closed form is $J_L(x)=\frac13(2x+Px)$.
+
+Both $S^n$ and $J_L$ are therefore FNE, hence their reflectors $R_S^n := 2S^n - I$ and $R_L := 2J_L - I$ are nonexpansive (NE). The DRS single-step operator $T_{\text{DR}}^n := \frac{1}{2}(I + R_L R_S^n)$ is therefore FNE~\cite{bauschke2017convex}, and the iterates satisfy Fejér monotonicity: for any fixed point $u^{n,\dagger}$,
+\begin{equation} 
+\|u^{n,k+1} - u^{n,\dagger}\|^2 \leq \|u^{n,k} - u^{n,\dagger}\|^2 - \|u^{n,k+1} - u^{n,k}\|^2.
+\label{eq:fejer}
+\end{equation}
+
+Hence, the DRS inner iteration dissipates its algorithmic storage relative to a fixed point at every step.
+
+\subsection{Theorem 1: Finite-Iteration Augmented Storage Inequality}
+\label{subsec:theorem1}
+Theorem~1 follows from adding the physical energy inequality (Condition~\ref{ass:discrete_passivity}) and the algorithmic Lyapunov inequality (Fejér monotonicity).
+
+Consider macro-step $n$. On the physical side, Condition~\ref{ass:discrete_passivity} applied to each subsystem and summed gives:
+\begin{equation}
+\begin{aligned}
+\big(H_A(x_A^{n+1}) + H_B(x_B^{n+1})\big) - \big(H_A(x_A^n) + H_B(x_B^n)\big)\\
+\leq \frac{1}{2}\big(\|\hat{a}^n\|^2 - \|b^{n+1}\|^2\big),
+\label{eq:physical_sum}
+\end{aligned}
+\end{equation}
+where $\hat{a}^n = P \hat{b}^{n,\star}$ is the incident wave used to drive the macro-step after inner iteration terminates, and $b^{n+1} = \operatorname{col}(b_A^{n+1}, b_B^{n+1})$ is the outgoing wave produced after advancement.
+
+On the algorithmic side, Fejér monotonicity from \S~\ref{subsec:fejer_monotonicity} summed over $K_n$ steps yields:
+\begin{equation}
+\frac{1}{2}\|u^{n,K_n} - u^{n,\dagger}\|^2 - \frac{1}{2}\|u^{n,0} - u^{n,\dagger}\|^2 \leq 0.
+\label{eq:fejer_sum}
+\end{equation}
+
+Adding~\eqref{eq:physical_sum} and~\eqref{eq:fejer_sum} and defining
+\begin{equation}
+\mathcal{V}^n := H_A(x_A^n) + H_B(x_B^n) + \frac{1}{2}\|u^{n,K_n} - u^{n,\dagger}\|^2,
+\label{eq:augmented_storage_def}
+\end{equation}
+we obtain the following theorem. The quantity $\mathcal{V}^n$ is defined per macro-step $n$ and does not chain across steps.
+
+\begin{theorem}[Finite-iteration Augmented Storage Inequality]
+\label{thm:augmented_storage}
+Assume Condition~\ref{ass:fne_portmap} and Condition~\ref{ass:discrete_passivity} hold, and that the monolithic solution $b^{n,\star}$ (defined in \S~\ref{subsec:frozen_port_map}) exists at macro-step $n$. Let the inner iteration of macro-step $n$ be executed for $K_n \geq 0$ steps according to Algorithm~\ref{alg:scattering_iterative_coupling}, and let the macro-step be advanced with $\hat{b}^{n,\star}$ and incident wave $\hat{a}^n = P \hat{b}^{n,\star}$. Then
+\begin{equation}
+\begin{aligned}
+&\big(H_A(x_A^{n+1}) + H_B(x_B^{n+1})\big) - \big(H_A(x_A^n) + H_B(x_B^n)\big) \\
+&\quad + \frac{1}{2}\|u^{n,K_n} - u^{n,\dagger}\|^2 - \frac{1}{2}\|u^{n,0} - u^{n,\dagger}\|^2 \\
+&\qquad \leq \frac{1}{2}\big(\|\hat{a}^n\|^2 - \|b^{n+1}\|^2\big).
+\end{aligned}
+\label{eq:augmented_storage_inequality}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Summing Condition~\ref{ass:discrete_passivity} over the subsystems yields~\eqref{eq:physical_sum}. Fejér monotonicity from \S~\ref{subsec:fejer_monotonicity} yields~\eqref{eq:fejer_sum}. Adding the two inequalities gives~\eqref{eq:augmented_storage_inequality}.
+\end{proof}
+
+Inequality~\eqref{eq:augmented_storage_inequality} states that the change in physical energy $\Delta H = (H_A+H_B)(x^{n+1}) - (H_A+H_B)(x^n)$, reduced by the Fejér decrease of the algorithmic storage, is bounded above by the net wave energy $\frac{1}{2}(\|\hat{a}^n\|^2 - \|b^{n+1}\|^2)$ supplied through the interface. When the inner iteration has not fully converged, the Fejér decrease is strictly positive and provides a dissipation margin that absorbs the interface mismatch.
+
+The fixed point $u^{n,\dagger}$ is never computed online. The theorem guarantees that a nonnegative term $\frac{1}{2}\|u^{n,0}-u^{n,\dagger}\|^2 - \frac{1}{2}\|u^{n,K_n}-u^{n,\dagger}\|^2$ exists such that the energy inequality holds at every macro-step. The practical guarantee follows from Fejér monotonicity of the DRS iterates, which holds without explicit value of $u^{n,\dagger}$.
+
+\subsection{Theorem 2: Hard-Coupling Limit Recovers Monolithic Discretization}
+\label{subsec:theorem2}
+
+Theorem~\ref{thm:augmented_storage} guarantees energy safety for any finite $K_n$. We now show that as $K_n \to \infty$, the partitioned update converges macro-step by macro-step to a monolithic discrete-time trajectory.
+
+By Condition~\ref{ass:fne_portmap} and Minty's theorem, there exists a maximal monotone operator $A^n$ such that $S^n = J_{A^n} = (I + A^n)^{-1}$. $L = I-P$ is linear maximal monotone (\S~\ref{subsec:fejer_monotonicity}). Hence the DRS iteration solves $0 \in A^n(b) + (I-P)b$, the zero of the sum of two monotone operators. The operator $A^n$ is used only for analysis; it is never constructed in the actual algorithm.
+
+\begin{lemma}[DRS inner iteration converges to monolithic wave solution]
+\label{lem:drs_convergence}
+Assume Condition~\ref{ass:fne_portmap} holds and the monolithic solution $b^{n,\star}$ exists at macro-step $n$. Then as $k \to \infty$, the DRS auxiliary sequence $u^{n,k}$ converges to some fixed point $u^{n,\dagger} \in \operatorname{Fix}(T_{\text{DR}}^n)$, and the sequence $\hat{b}^{n,k} = J_{A^n}(u^{n,k})$ converges to the monolithic outgoing wave $b^{n,\star}$.
+\end{lemma}
+
+\begin{proof}
+In finite-dimensional spaces, DRS iteration for the sum of maximal monotone operators converges strongly \cite{lions1979splitting,bauschke2017convex}. Condition~\ref{ass:fne_portmap} and Minty's theorem give $S^n = J_{A^n}$ with $A^n$ maximal monotone. $L = I-P$ is linear maximal monotone (\S~\ref{subsec:fejer_monotonicity}). The standard DRS convergence theorem directly yields $u^{n,k} \to u^{n,\dagger} \in \operatorname{Fix}(T_{\text{DR}}^n)$. By Lipschitz continuity of the resolvent (implied by FNE), $\hat{b}^{n,k} = J_{A^n}(u^{n,k}) \to J_{A^n}(u^{n,\dagger}) = b^{n,\star}$.
+\end{proof}
+
+\begin{theorem}[Hard-coupling limit recovers monolithic discretization]
+\label{thm:kn_to_infty_monolithic}
+Assume Condition~\ref{ass:fne_portmap} holds at every macro-step, the monolithic solution exists, and the subsystem advancement maps $\Phi_i^{\Delta t}$ and frozen port maps $S_i^n$ are continuous in state and incident wave over compact trajectory sets. Then for any finite time interval $T = N \Delta t$, if $K_n \to \infty$ for all $n = 0, \dots, N-1$, the partitioned trajectory converges pointwise on the grid to an admissible monolithic discrete trajectory, one that satisfies the monolithic interface condition~\eqref{eq:monolithic_interface} at every macro-step.
+\end{theorem}
+
+\begin{proof}
+By induction on $n$. For $n=0$ the initial states agree. Suppose the partitioned state at step $n-1$ has converged to the monolithic state. At macro-step $n$, Lemma~\ref{lem:drs_convergence} gives $\hat{b}^{n,\star} \to b^{n,\star}$, hence $\hat{a}^n = P \hat{b}^{n,\star} \to a^{n,\star}$. By continuity of $\Phi_i^{\Delta t}$ at $(x_i^n, \hat{a}_i^n)$,
+\begin{equation}
+(x_i^{n+1}, b_i^{n+1}) = \Phi_i^{\Delta t}(x_i^n, \hat{a}_i^n) \to \Phi_i^{\Delta t}(x_i^n, a_i^{n,\star}),
+\end{equation}
+and $\Phi_i^{\Delta t}(x_i^n, a_i^{n,\star})$ is the monolithic update at macro-step $n$, since $(a^{n,\star}, b^{n,\star})$ satisfies the monolithic condition~\eqref{eq:monolithic_interface}. The induction step is complete.
+\end{proof}
+
+\begin{remark}[Uniqueness of the monolithic solution]
+\label{rem:uniqueness}
+Condition~\ref{ass:fne_portmap} and Minty's theorem give $S^n = (I+A^n)^{-1}$ with $A^n$ maximal monotone. The monolithic interface condition is equivalent to $0 \in A^n(b) + (I-P)b$. When $A^n$ is strictly monotone, $A^n + (I-P)$ is strictly monotone and the monolithic solution at macro-step $n$ is unique. Strict monotonicity holds for subsystems with strictly increasing constitutive relations (positive stiffness springs, positive damping, monotone nonlinearities). The Duffing benchmark in Section~V satisfies this condition.
+
+When $A^n$ is monotone but not strictly monotone, multiple solutions may coexist. Physical sources include Coulomb friction (set-valued at zero velocity), ideal plasticity, and statically indeterminate contact. Fej\'er monotonicity implies that DRS selects the fixed point closest to the initialization $u^{n,0}=P b^n$, a wave-domain minimal-jump selection. The same non-uniqueness is present in the monolithic problem. The coupling method inherits it.
+\end{remark}

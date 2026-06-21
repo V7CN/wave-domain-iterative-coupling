@@ -1,0 +1,73 @@
+% !TEX root = main.tex
+\section{Experiments: Two-Oscillator Benchmark}
+\label{sec:experiments}
+
+We validate the iterative coupling framework on a minimal nontrivial benchmark, two coupled oscillators split into two subsystems with one wave port each. Its difficulty comes from a \emph{mixed Duffing--linear} configuration. Subsystem~A includes a stiff hardening spring nonlinearity, so the frozen discrete-time port maps are state-dependent and cannot be reduced to a globally linear impedance bound. The experiments target three claims from Sections~II--IV: (i) Condition~\ref{ass:fne_portmap} (FNE margins), (ii) the augmented-storage energy guarantee under finite inner iterations (Theorem~\ref{thm:augmented_storage}), and (iii) convergence to a monolithic reference trajectory as $K_n\to\infty$ (Theorem~\ref{thm:kn_to_infty_monolithic}).
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/two_oscillators/experiment_schematic.eps}%
+  \caption{Schematic of the two-oscillator benchmark.}
+  \label{fig:twoosc_schematic}
+\end{figure}
+\subsection{Benchmark and settings.}
+Fig.~\ref{fig:twoosc_schematic} depicts the subsystem decomposition and ports. Each subsystem exposes a single port $(e_i,f_i)$ and is interfaced through wave variables $(a_i,b_i)$ with lossless coupling $a=Pb$ (Section~\ref{subsec:scattering}). Both subsystems are time-discretized by a passivity-preserving discrete-gradient method, so Condition~\ref{ass:discrete_passivity} holds by construction; for the linear subsystem, this reduces to an implicit midpoint/trapezoidal update. All model and simulation parameters are listed in Table~\ref{tab:twoosc_params}.
+
+\begin{table}[!t]
+  \caption{Two-oscillator benchmark parameters and simulation settings.}
+  \label{tab:twoosc_params}
+  \centering
+  \renewcommand{\arraystretch}{1.1}
+  \begin{tabular}{l c l c}
+    \hline
+    Parameter & Value & Parameter & Value \\
+    \hline
+    $m_1$ & $8.0\;\mathrm{kg}$ & $m_2$ & $4.0\;\mathrm{kg}$ \\
+    $k_1$ & $100\;\mathrm{N\,m^{-1}}$ & $k_2$ & $50\;\mathrm{N\,m^{-1}}$ \\
+    $c_1$ & $0$ & $c_2$ & $0$ \\
+    $k_{12}$ & $120\;\mathrm{N\,m^{-1}}$ & $c_{12}$ & $0.05\;\mathrm{N\,s\,m^{-1}}$ \\
+    $k_{\mathrm{nl}}$ & $8000\;\mathrm{N\,m^{-3}}$ & $q_1(0)$ & $0.4\;\mathrm{m}$ \\
+    $q_2(0)$ & $0$ & $v_1(0)=v_2(0)$ & $0$ \\
+    $\Delta t$ & $0.01\;\mathrm{s}$ & $T$ & $10.0\;\mathrm{s}$ \\
+    $\gamma$ & $0.4\;\mathrm{N\,s\,m^{-1}}$ & $K_n$ & $\{0,3,8,20,35,50\}$ \\
+    \hline
+  \end{tabular}
+\end{table}
+
+The scattering impedance is set to $\gamma = 0.4\ \mathrm{N\,s\,m^{-1}}$. Remark~\ref{rem:gamma_rule} states that Condition~\ref{ass:fne_portmap} holds locally when the incremental port impedance satisfies $Z_d \succeq \gamma I$. The linear subsystem yields $\lambda_{\min}(Z_d) \approx 0.5\ \mathrm{N\,s\,m^{-1}}$ at $\Delta t = 0.01\ \mathrm{s}$. The Duffing subsystem has state-dependent impedance. The hardening spring $k_{\mathrm{nl}}>0$ keeps its contribution positive. Choosing $\gamma = 0.4$ below the linear bound accommodates this variation. Condition~\ref{ass:fne_portmap} is verified numerically along each realized trajectory via the FNE margins in Fig.~\ref{fig:twoosc_fne_passivity}(a).
+
+\subsection{Results and analysis.}
+Fig.~\ref{fig:twoosc_traj} compares the trajectories $q_1(t)$ and $q_2(t)$ for different inner-iteration budgets $K_n$ against a monolithic reference computed with the same passivity-preserving discrete-gradient time stepper and time step $\Delta t$.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{figures/two_oscillators/traj_q.eps}%
+  \caption{Trajectories $(q_1,q_2)$ for different inner-iteration budgets $K_n$ and the monolithic reference.}
+  \label{fig:twoosc_traj}
+\end{figure}
+
+We check Condition~\ref{ass:fne_portmap} at each macro-step $n$ by estimating the margin $\Delta_i^n(\alpha,\beta) := \langle S_i^n(\alpha)-S_i^n(\beta),\,\alpha-\beta\rangle - \|S_i^n(\alpha)-S_i^n(\beta)\|^2$ on a finite set of test pairs $(\alpha,\beta)$; \eqref{eq:fne_inequality} holds iff $\Delta_i^n(\alpha,\beta)\ge 0$ for all $\alpha,\beta$. Fig.~\ref{fig:twoosc_fne_passivity}(a) reports $\min_n\min \Delta_i^n$ and the number of test pairs with $\Delta_i^n<-\mathrm{tol}$ ($\mathrm{tol}=10^{-12}$) for each inner-iteration budget; since the trajectory depends on $K_n$, these margins also vary with $K_n$.
+
+For discrete passivity, we monitor the residual $r_i^n := (H_i(x_i^{n+1})-H_i(x_i^n))-\tfrac12(\|a_i^n\|^2-\|b_i^{n+1}\|^2)$; Condition~\ref{ass:discrete_passivity} holds at step $n$ whenever $r_i^n\le 0$. Fig.~\ref{fig:twoosc_fne_passivity}(b) summarizes $(r_i^n)_+$ together with the positive part of the \emph{augmented-storage residual} associated with \eqref{eq:augmented_storage_inequality} (Theorem~\ref{thm:augmented_storage}).
+
+Finally, Fig.~\ref{fig:twoosc_convergence} shows that the RMS state error decreases monotonically with $K_n$, consistent with Theorem~\ref{thm:kn_to_infty_monolithic}.
+
+\begin{figure}[!t]
+  \centering
+  \subfloat[]{\includegraphics[width=0.48\linewidth]{figures/two_oscillators/summary_FNE_vs_Kn.eps}\label{fig:twoosc_fne}}%
+  \hfill
+  \subfloat[]{\includegraphics[width=0.48\linewidth]{figures/two_oscillators/summary_passivity_vs_Kn.eps}\label{fig:twoosc_passivity}}%
+  \caption{Two-oscillator certificates versus inner-iteration budget $K_n$. (a) FNE certificate: worst-case numerically evaluated margins for Condition~\ref{ass:fne_portmap}. (b) Discrete-passivity and augmented-storage diagnostics: positive-part summaries $(\cdot)_+$ of the discrete-passivity residual \eqref{eq:discrete_passivity_scattering} and the augmented-storage residual associated with \eqref{eq:augmented_storage_inequality}.}
+  \label{fig:twoosc_fne_passivity}
+\end{figure}
+
+\begin{figure}[!t]
+  \centering
+  \subfloat[]{\includegraphics[width=0.48\linewidth]{figures/two_oscillators/position_error.eps}\label{fig:twoosc_poserr}}%
+  \hfill
+  \subfloat[]{\includegraphics[width=0.48\linewidth]{figures/two_oscillators/convergence_vs_Kn.eps}\label{fig:twoosc_knconv}}%
+  \caption{Hard-coupling limit validation (Theorem~\ref{thm:kn_to_infty_monolithic}). (a) RMS state error versus time relative to the monolithic reference. (b) RMS error decay versus $K_n$ (monotonic over the tested budgets).}
+  \label{fig:twoosc_convergence}
+\end{figure}
+
+In summary, for the selected $\gamma$, the FNE margins along the realized trajectories are numerically nonnegative (Fig.~\ref{fig:twoosc_fne_passivity}(a)), indicating that Condition~\ref{ass:fne_portmap} is consistent with the benchmark. The discrete-passivity residuals and the augmented-storage residual are essentially nonpositive in the positive-part summaries (Fig.~\ref{fig:twoosc_fne_passivity}(b)), with any remaining positive part at numerical roundoff (on the order of $10^{-14}$ in double precision), supporting the finite-iteration certificate of Theorem~\ref{thm:augmented_storage}. Finally, increasing $K_n$ monotonically reduces the RMS state error and approaches the monolithic reference (Fig.~\ref{fig:twoosc_convergence}), consistent with Theorem~\ref{thm:kn_to_infty_monolithic}.
+

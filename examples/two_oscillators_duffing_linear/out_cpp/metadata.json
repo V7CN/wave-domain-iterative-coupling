@@ -1,0 +1,13 @@
+{
+  "schema_version": 3,
+  "model_backend": "generalized-ph",
+  "dt": 0.01, "steps": 1000, "gamma": 0.40000000000000002,
+  "interconnection": {"type": "linear-dirac", "factory": "equal-effort-opposite-flow", "total_port_dimension": 2, "constraint_rank": 2, "dirac_residual": 0, "wave_orthogonality_residual": 3.665417751368233e-16, "resolvent_condition_number": 3},
+  "reference_iterations": 200,
+  "iteration_budgets": [0, 3, 8, 20, 35, 50],
+  "diagnostics": {"enabled": true, "reference_iterations": 80, "fne_pairs": 32, "fne_scale": 1, "fne_tolerance": 9.9999999999999998e-13, "fne_seed_A": 1000, "fne_seed_B": 2000},
+  "execution": {"requested_workers": 0, "effective_workers": 2},
+  "physics": {"m1": 8, "m2": 4, "k1": 100, "k2": 50, "c1": 0, "c2": 0, "k12": 120, "c12": 0.050000000000000003, "knl": 8000},
+  "initial": {"q1": 0.40000000000000002, "v1": 0, "delta": -0.40000000000000002, "q2": 0, "v2": 0, "bA": 0, "bB": 0},
+  "model_solver": {"tolerance": 9.9999999999999998e-13, "max_iterations": 25, "max_line_search_iterations": 10, "armijo_factor": 0.0001}
+}

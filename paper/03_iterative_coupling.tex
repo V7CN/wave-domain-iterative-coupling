@@ -1,0 +1,115 @@
+\section{Proposed Method: Wave-Domain DRS Interface Algorithm}
+\label{sec:iterative_coupling}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/img-02.eps}%
+\caption{Parallel iterative coupling with macro-step $n$ and inner iteration $k$.}
+\label{fig:iterative_coupling}
+\end{figure}
+
+\subsection{From Monolithic Fixed-Point to Interface Coordination}
+\label{subsec:monolithic_to_coordination}
+
+Section~\ref{subsec:frozen_port_map} formulated the monolithic interface condition as the fixed-point equation $b = S^n(Pb)$. We now turn this fixed-point problem into an interface coordination scheme. The equation expresses two competing consistency requirements on the outgoing wave $b$. The subsystems demand that $b$ be the reflection of their incident wave via the frozen port map $S^n$, while the coupling demands that $b$ satisfy the lossless interconnection $a = Pb$ through the orthogonal matrix $P$.
+
+The most direct approach is to apply Picard iteration $b^{k+1} = S^n(P b^k)$ to this fixed-point problem. However, it lacks the structural property that the algorithm's energy does not increase, and it provides no way to judge whether early termination has injected spurious energy. We therefore adopt Douglas-Rachford splitting (DRS). DRS alternates between the \emph{subsystem response} side and the \emph{coupling correction} side: each queries its operator, and an auxiliary variable is updated toward consensus. Each step can be interpreted as a passive operation in the wave domain.
+
+\subsection{Two Operators for Splitting: Subsystem Response and Coupling Correction}
+\label{subsec:two_operators}
+
+Without loss of generality, consider DRS for two maps $T_1, T_2$ \cite{bauschke2017convex}.
+In our coupling problem, the space is $\mathbb{R}^{2m}$ (the stacked outgoing wave space), and the two maps are:
+\begin{equation}
+T_1 = S^n = \begin{bmatrix} S_A^n & 0 \\ 0 & S_B^n \end{bmatrix}, \qquad
+T_2 = J_L := (2I - P)^{-1}.
+\label{eq:drs_mappings}
+\end{equation}
+
+\textbf{$T_1 = S^n$ is the frozen port map of the subsystems.} The block-diagonal structure of $S^n$ means that $S_A^n$ and $S_B^n$ can be evaluated \textbf{fully in parallel} with no communication. This is the root of the method's parallelism.
+
+\textbf{$T_2 = J_L$ is the coupling resolvent operator.} Define the coupling mismatch operator $L := I - P$. Then $J_L = (I+L)^{-1} = (2I-P)^{-1}$ is a closed-form $2m \times 2m$ matrix operation that does not involve the internal states of the subsystems. For the two-port swap matrix $P = \begin{bmatrix} 0 & I \\ I & 0 \end{bmatrix}$, we have $J_L(x) = \frac{1}{3}(2x + Px)$; for general orthogonal $P$, $J_L = (2I-P)^{-1}$ is well defined.
+
+With parallel execution of $S_A^n$ and $S_B^n$, the wall-clock time per inner iteration is the maximum of the two frozen port query times plus a small coupling update. The coupling update is a closed-form operation on a $2m \times 2m$ matrix. For typical co-simulation settings $m$ is small, so the cost is dominated by the slower subsystem query.
+
+\subsection{DRS Inner Iteration Algorithm}
+\label{subsec:drs_inner_iteration}
+
+Taking $T_1 = S^n$ and $T_2 = J_L$, we obtain the DRS inner iteration for macro-step $n$:
+\begin{equation}
+\begin{aligned}
+\text{(Response step)}\quad &\hat{b}^{n,k} := S^n(u^{n,k}), \\[4pt]
+\text{(Projection step)}\quad &w^{n,k} := J_L\big(2\hat{b}^{n,k} - u^{n,k}\big), \\[4pt]
+\text{(Update step)}\quad &u^{n,k+1} := u^{n,k} + w^{n,k} - \hat{b}^{n,k}.
+\end{aligned}
+\label{eq:drs_inner_iteration}
+\end{equation}
+
+Here $u^{n,k}$ is the current guess of the coupling-consistent incident wave, $\hat{b}^{n,k}$ the corresponding subsystem response, and $w^{n,k}$ the coupling projection. 
+When $\hat{b}^{n,k} = w^{n,k}$, the response $\hat{b}^{n,k}$ already satisfies the coupling, the update is zero, and a fixed point is attained.
+
+Section~\ref{sec:passivity_convergence} will prove that when $S^n$ and $J_L$ satisfy the FNE conditions, the DRS single-step operator is also FNE, and consequently the inner iteration satisfies Fejér monotonicity. The algorithm thus possesses a natural Lyapunov function, dissipating the distance to a fixed point at every step.
+
+At a DRS fixed point, $u^\dagger = u^\dagger + J_L(2b^\star - u^\dagger) - b^\star$ with $b^\star := S^n(u^\dagger)$. Hence $J_L(2b^\star - u^\dagger) = b^\star$, and substituting $J_L = (2I-P)^{-1}$ gives
+\begin{equation}
+2b^\star - u^\dagger = (2I-P)b^\star \;\Longrightarrow\; u^\dagger = Pb^\star.
+\label{eq:fixed_point_verification}
+\end{equation}
+Thus $b^\star = S^n(Pb^\star)$, the monolithic condition~\eqref{eq:fixed_point}.
+
+\subsection{Finite-Iteration Termination and Macro-Step Advancement}
+\label{subsec:finite_iteration}
+
+In practice, only a finite number of inner iterations are executed per macro-step. Let $K_n \geq 0$ be the budget for macro-step $n$. The initialization is:
+\begin{equation}
+b^n := \operatorname{col}(b_A^n, b_B^n), \qquad u^{n,0} = P b^n, \qquad \hat{b}^{n,\star} = b^n.
+\label{eq:initialization}
+\end{equation}
+If $K_n = 0$, the inner iteration is skipped and $\hat{b}^{n,\star} = b^n$; the algorithm reduces to an explicit wave interface $\hat{a}^n = P b^n$.
+
+If $K_n > 0$, we execute the DRS inner iteration (Eq.~\eqref{eq:drs_inner_iteration}) for $K_n$ steps, taking the $\hat{b}^{n,k}$ computed in the last iteration:
+\begin{equation}
+\hat{b}^{n,\star} := \hat{b}^{n,K_n-1}.
+\label{eq:final_response}
+\end{equation}
+The convergence criterion $\|u^{n,k+1} - u^{n,k}\| \leq \varepsilon$ can trigger early exit.
+
+We then construct the coupling-consistent incident wave and advance the subsystems in parallel:
+\begin{equation}
+\hat{a}^n := P \hat{b}^{n,\star}, \quad
+(x_i^{n+1}, b_i^{n+1}) = \Phi_i^{\Delta t}(x_i^n, \hat{a}_i^n), \quad i \in \{A, B\}.
+\label{eq:macro_step_advance}
+\end{equation}
+
+\begin{algorithm}[t]
+\caption{Wave-Domain Douglas-Rachford Iterative Coupling}
+\label{alg:scattering_iterative_coupling}
+\begin{algorithmic}[1]
+\Require Initial states $x_A^0, x_B^0$; initial outgoing waves $b_A^0, b_B^0$; macro time step $\Delta t$; coupling matrix $P$ ($P^\top P = I$); inner iteration budget $K_n$ ($n = 0,1,\dots$); optional convergence tolerance $\varepsilon > 0$
+\Ensure Updated states $x_i^{n+1}$ and outgoing waves $b_i^{n+1}$ for each macro-step
+
+\For{$n = 0, 1, 2, \dots$}
+    \State // Freeze state and form frozen port map
+    \State Form $S^n = \operatorname{diag}(S_A^n, S_B^n)$ from $x_A^n, x_B^n$ and $\Delta t$
+    \State // Initialize inner iteration
+    \State $b^n \gets \operatorname{col}(b_A^n, b_B^n)$
+    \State $u^{n,0} \gets P b^n$
+    \State $\hat{b}^{n,\star} \gets b^n$
+    \State // Inner iteration
+    \For{$k = 0, 1, \dots, K_n-1$}
+        \State $\hat{b}^{n,k} \gets S^n(u^{n,k})$ \Comment{Evaluate $S_A^n, S_B^n$ in parallel}
+        \State $w^{n,k} \gets J_L(2\hat{b}^{n,k} - u^{n,k})$ \Comment{$J_L = (2I-P)^{-1}$, closed form}
+        \State $u^{n,k+1} \gets u^{n,k} + w^{n,k} - \hat{b}^{n,k}$
+        \State $\hat{b}^{n,\star} \gets \hat{b}^{n,k}$
+        \If{$\|u^{n,k+1} - u^{n,k}\| \leq \varepsilon$}
+            \State \textbf{break}
+        \EndIf
+    \EndFor
+    \State // Macro-step
+    \State $\hat{a}^n \gets P \hat{b}^{n,\star}$ \Comment{Coupling-consistent incident wave}
+    \For{$i \in \{A, B\}$ in parallel}
+        \State $(x_i^{n+1}, b_i^{n+1}) \gets \Phi_i^{\Delta t}(x_i^n, \hat{a}_i^n)$\Comment{one step integrator}
+    \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}

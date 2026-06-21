@@ -1,0 +1,137 @@
+\section{Coupling Problem in Wave Domain: From Port Physics to Fixed-Point Form}
+\label{sec:problem_formulation}
+
+\subsection{Port-Hamiltonian Subsystems}
+\label{subsec:ph_passivity}
+
+Consider a robotic system partitioned into two subsystems $A$ and $B$. Each subsystem $i \in \{A, B\}$ has state $x_i \in \mathbb{R}^{n_i}$ and Hamiltonian $H_i: \mathbb{R}^{n_i} \to \mathbb{R}$ (the stored energy function). The subsystem exchanges energy with its environment through a power port with port variables effort $e_i \in \mathbb{R}^m$ and flow $f_i \in \mathbb{R}^m$, whose inner product $e_i^\top f_i$ is the instantaneous power injected into subsystem $i$ through the port.
+
+Each subsystem is described in standard port-Hamiltonian (pH) form. The dynamics of subsystem $i$ are
+\begin{equation}
+\begin{aligned}
+\dot{x}_i &= \big(J_i(x_i) - R_i(x_i)\big) \nabla H_i(x_i) + G_i(x_i) e_i, \\[2pt]
+f_i &= G_i(x_i)^\top \nabla H_i(x_i),
+\end{aligned}
+\label{eq:ph_subsystem}
+\end{equation}
+where $J_i(x_i)^\top = -J_i(x_i)$ encodes the internal interconnection structure (energy routing), $R_i(x_i)^\top = R_i(x_i) \succeq 0$ encodes dissipation, and $G_i(x_i)$ maps the port effort into the state space. From the skew-symmetry and positive semi-definiteness of $(J_i - R_i)$, we directly obtain the continuous-time passivity inequality
+\begin{equation}
+\dot{H}_i(x_i) \leq e_i^\top f_i,
+\label{eq:continuous_passivity}
+\end{equation}
+which states that the rate of change of stored energy in subsystem $i$ does not exceed the power injected through the port. Inequality~\eqref{eq:continuous_passivity} is the physical foundation of all subsequent analysis in this paper, and the discrete numerical computation must preserve this property.
+
+We consider a linear lossless interconnection. For two directly coupled ports, $e_A = e_B$ and $f_A + f_B = 0$, which imply power conservation $e_A^\top f_A + e_B^\top f_B = e_A^\top(f_A + f_B) = 0$. Violating these constraints can inject spurious energy.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{figures/img-01.eps}%
+\caption{Port-Hamiltonian subsystem with power port $(e_i, f_i)$.}
+\label{fig:ph_subsystem}
+\end{figure}
+
+\subsection{Scattering Transformation to the Wave Domain}
+\label{subsec:scattering}
+
+Scattering variables have two key properties. \textbf{(1) Port power becomes a difference of Euclidean norms}, so passivity reduces to a norm inequality. \textbf{(2) Lossless coupling becomes an orthogonal linear constraint}, so the interconnection is energy-neutral by construction.
+
+Choose a positive parameter $\gamma > 0$ (the scattering impedance; see Section~\ref{subsec:standing_conditions}), and define the incident wave $a_i$ and outgoing wave $b_i$ for subsystem $i$:
+\begin{equation}
+a_i := \frac{e_i + \gamma f_i}{\sqrt{2\gamma}}, \qquad
+b_i := \frac{e_i - \gamma f_i}{\sqrt{2\gamma}}.
+\label{eq:scattering_transform}
+\end{equation}
+
+The inverse transformation is
+\begin{equation}
+e_i = \sqrt{\frac{\gamma}{2}}\,(a_i + b_i), \qquad
+f_i = \frac{1}{\sqrt{2\gamma}}\,(a_i - b_i).
+\label{eq:inverse_scattering}
+\end{equation}
+
+In the wave domain, port power has the norm expression:
+\begin{equation}
+e_i^\top f_i = \frac{1}{2}\big(\|a_i\|^2 - \|b_i\|^2\big).
+\label{eq:power_norm}
+\end{equation}
+
+Hence, discrete passivity is equivalent in the wave domain to a norm condition:
+\begin{equation}
+\|b_i\| \leq \|a_i\|.
+\label{eq:wave_passivity}
+\end{equation}
+
+In the terminology of monotone operators, the discrete passivity in~\eqref{eq:wave_passivity} is nonexpansiveness (NE). The subsystem does not amplify wave signals, corresponding to $\ell_2$ gain $\leq 1$.
+
+For this linear lossless coupling,
+\begin{equation}
+e_A = e_B, \qquad f_A + f_B = 0.
+\label{eq:lossless_coupling}
+\end{equation}
+
+This implies $e_A^\top f_A + e_B^\top f_B = 0$. Substituting~\eqref{eq:inverse_scattering} into~\eqref{eq:lossless_coupling}, the coupling constraints in the wave domain take the form
+\begin{equation}
+a_A = b_B, \qquad a_B = b_A.
+\label{eq:wave_coupling}
+\end{equation}
+
+Define the stacked incident wave $a := \operatorname{col}(a_A, a_B) \in \mathbb{R}^{2m}$ and stacked outgoing wave $b := \operatorname{col}(b_A, b_B) \in \mathbb{R}^{2m}$; the coupling~\eqref{eq:wave_coupling} can then be written as
+\begin{equation}
+a = P b, \qquad P := \begin{bmatrix} 0 & I_m \\ I_m & 0 \end{bmatrix},
+\label{eq:coupling_matrix}
+\end{equation}
+where $P^\top P = I_{2m}$ is an orthogonal matrix. For the more general case of $N$ subsystems with linear lossless interconnection, the coupling can likewise be expressed as $a = P b$ with $P$ a general orthogonal matrix. Without loss of generality, this paper works throughout with the two-port swap matrix $P$.
+
+From the orthogonality of the wave-domain coupling we have:
+\begin{equation}
+\|a\|^2 = \|P b\|^2 = b^\top P^\top P b = \|b\|^2.
+\label{eq:coupling_norm}
+\end{equation}
+
+In the original $(e_i, f_i)$ coordinates the lossless constraint is an algebraic condition, whereas in the wave domain it becomes a norm equality. This transformation allows convex analysis and monotone operator tools to be applied to passivity.
+
+\begin{remark}[Linear lossless coupling]
+\label{rem:linear_coupling_scope}
+Any network of ideal transformers, gyrators, and port permutations between collocated power ports (force--velocity, voltage--current, pressure--flow) admits a wave-domain representation $a = Pb$ with constant orthogonal $P$. This covers standard interconnections in multibody dynamics, circuit coupling, and hydraulic networks. State-modulated coupling, where $P$ depends on the subsystem states (configuration-dependent transmission ratios, variable contact topology), is not treated here. When the modulating state is frozen per macro-step, consistent with the frozen-port-map framework of Section~\ref{subsec:frozen_port_map}, the present analysis extends directly. A complete treatment merits a separate study.
+\end{remark}
+
+\subsection{Frozen Port Map and Macro-Step Consistency Condition}
+\label{subsec:frozen_port_map}
+
+This paper concerns discrete-time simulation. Let $\Delta t$ be the macro time step and $n = 0, 1, 2, \dots$ the macro-step index. All discrete wave variables absorb $\sqrt{\Delta t}$ relative to the continuous-time definitions~\eqref{eq:scattering_transform}, so that $a_i^n := \sqrt{\Delta t}\, a_i(t_n)$, $b_i^n := \sqrt{\Delta t}\, b_i(t_n)$, and $\frac{1}{2}(\|a_i^n\|^2 - \|b_i^{n+1}\|^2)$ is an energy. Every wave variable with a discrete superscript in the paper is understood to include this factor.
+
+At macro-step $n$, each subsystem is driven by a discrete-passive integration operator $\Phi^{\Delta t}_i$. Given the current states $x_A^n, x_B^n$ of the two subsystems, the goal of each macro-step is to find the next states and port variables $(x_A^{n+1}, x_B^{n+1}, a_A, a_B, b_A, b_B)$ satisfying the three groups of equations:
+\begin{equation}
+\begin{cases}
+(x_A^{n+1},b_A) = \Phi^{\Delta t}_A(x_A^n,a_A),\\[2pt]
+(x_B^{n+1},b_B) = \Phi^{\Delta t}_B(x_B^n,a_B),\\[2pt]
+a_A = b_B, \ a_B = b_A,
+\end{cases}
+\label{eq:monolithic_macro_step}
+\end{equation}
+which are, respectively, the internal dynamics of subsystems $A$ and $B$, and the strict coupling relation. We call this the \emph{monolithic macro-step}. Each macro-step requires solving an implicit algebraic system of dimension $(n_A+n_B+4m)$, which cannot be parallelized and is slow.
+
+To decouple the interface from the state update, we freeze the current state and retain only the port-level input--output behavior. For subsystem $i$, fixing $x_i^n$ yields the \emph{frozen port map} of the current macro-step:
+\begin{equation}
+b_i = S_i^n(a_i), \quad i \in \{A, B\}.
+\label{eq:frozen_port_map}
+\end{equation}
+
+$S_i^n(\cdot)$ is the outgoing wave produced by one evaluation of $\Phi_i^{\Delta t}(x_i^n, \cdot)$, with the resulting state discarded. The frozen port maps of the two subsystems stack into a block-diagonal operator:
+\begin{equation}
+S^n := \operatorname{diag}(S_A^n, S_B^n): \mathbb{R}^{2m} \to \mathbb{R}^{2m}.
+\label{eq:stacked_frozen_map}
+\end{equation}
+
+The \emph{monolithic interface condition} of the current macro-step can then be written as
+\begin{equation}
+b = S^n(a), \quad a = P b.
+\label{eq:monolithic_interface}
+\end{equation}
+Eliminating $a$ (or $b$) yields the equivalent fixed-point equation
+\begin{equation}
+b = S^n(P b) \quad \Longleftrightarrow \quad a = P S^n(a).
+\label{eq:fixed_point}
+\end{equation}
+
+We call a solution of~\eqref{eq:monolithic_interface} the \emph{monolithic solution} at macro-step $n$, denoted $(a^{n,\star}, b^{n,\star})$. In fully coupled simulation, each macro-step solves a global implicit system to obtain it; our objective is to approximate this solution in an energy-safe manner. The fixed-point problem~\eqref{eq:fixed_point} is the central object.
