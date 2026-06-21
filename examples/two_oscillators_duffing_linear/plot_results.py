@@ -322,7 +322,7 @@ def plot_fne_passivity_summary(outs, Kn_list):
     ax.plot(Kn_arr, min_margin_B, marker="o", label=r"$\min_n \min\,\Delta_B^n$")
     ax.axhline(0.0, linewidth=1.0)
     ax.set_ylabel(r"margin")
-    ax.set_title("FNE certificate")
+    ax.set_title("FNE Verification")
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=10, frameon=False)
     ax = axes[1]
@@ -371,7 +371,7 @@ def plot_fne_passivity_summary(outs, Kn_list):
     ax.semilogy(Kn_arr, np.maximum(max_rB_pos, 1e-18), marker="o", label=r"$\max_n\,(r_B^n)_+$")
     ax.semilogy(Kn_arr, np.maximum(max_enh_pos, 1e-18), marker="o", label=r"$\max_n\,(\mathrm{AugRes}^n)_+$")
     ax.set_ylabel("max positive residual")
-    ax.set_title("Discrete Passivity Certificate")
+    ax.set_title(r"Passivity \& Augmented Storage")
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=10, frameon=False)
 
